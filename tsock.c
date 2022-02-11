@@ -19,8 +19,8 @@ données du réseau */
 #include <errno.h>
 
 enum bool {false, true};
-enum ConnexionType {None, UDP, TCP};
 typedef enum bool bool;
+enum ConnexionType {None, UDP, TCP};
 
 // todo arguments
 void UDP_source() {
@@ -61,13 +61,14 @@ int main(int argc, char **argv) {
     int port = atoi(argv[argc-1]); // todo tester cas erreur utilisateur
     port = htons(port);
 
-	while ((c = getopt(argc, argv, "pn:su")) != -1) {
+	while ((c = getopt(argc, argv, "pn:us")) != -1) {
 		switch (c) {
 		case 'p':
 			if (source == 1) {
 				printf("usage: cmd [-p|-s][-n ##]\n");
 				exit(1);
 			}
+            printf("set source to 0\n");
 			source = 0;
 			break;
 
@@ -76,7 +77,8 @@ int main(int argc, char **argv) {
 				printf("usage: cmd [-p|-s][-n ##]\n");
 				exit(1) ;
 			}
-			source = 1;
+            printf("set source to 1\n");
+            source = 1;
 			break;
 
 		case 'n':
@@ -98,29 +100,40 @@ int main(int argc, char **argv) {
 		exit(1) ;
 	}
 
-	if (source == 1)
-		printf("on est dans le source\n");
-        if ( connexion == UDP ) {
-			UDP_source();
+	if (source == 1) {
+        printf("on est dans le source\n");
+        if (connexion == UDP) {
+            UDP_source();
         }
+    } else {
+        printf("on est dans le puits\n");
+        if (connexion == UDP) {
+            char buff[1024];
+            memset(buff, 0, 1024);
 
-	else
-		printf("on est dans le puits\n");
-		if ( connexion == UDP ) {
-			int sk = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-			if ( sk == -1 ) {
-				printf("Erreur pendant la creation du socket\n");
-				exit(-1);
-			}
-			printf("on a bien créé le socket\n");
-			struct sockaddr_in adr;
-			memset((char*)&adr,0,sizeof(adr));
+            int sk = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+            if (sk == -1) {
+                printf("Erreur pendant la creation du socket\n");
+                exit(-1);
+            }
+            printf("on a bien créé le socket\n");
+            struct sockaddr_in adr;
+            memset((char *) &adr, 0, sizeof(adr));
 
-			adr.sin_family = AF_INET;
-			adr.sin_port = htons(5565); // todo take argument
-			adr.sin_addr.s_addr = INADDR_ANY;
+            adr.sin_family = AF_INET;
+            adr.sin_port = htons(5565); // todo take argument
+            adr.sin_addr.s_addr = INADDR_ANY;
+            bind(sk, (struct sockaddr * ) & adr, sizeof(adr));
 
+            struct sockaddr * adr_emeteur = NULL;
+            int p_long_adr_emeteur = sizeof(adr);
+            while ( true ) {
+                recvfrom(sk, buff, 1024, 0, adr_emeteur, (socklen_t *)&p_long_adr_emeteur);
+                printf("%s\n", buff);
+            }
+            close(sk); // ça ser à rien yass todo close socket
         }
+    }
 
 	if (nb_message != -1) {
 		if (source == 1)
