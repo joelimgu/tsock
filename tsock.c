@@ -18,9 +18,26 @@ données du réseau */
 /* pour la gestion des erreurs */
 #include <errno.h>
 
+#define NONE 0
+
 enum bool {false, true};
 typedef enum bool bool;
-enum ConnexionType {None, UDP, TCP};
+
+enum ConnexionType {UDP=1, TCP}; // | NONE
+typedef enum ConnexionType ConnexionType;
+
+enum ConnexionMode {Puits=1, Source}; // | NONE
+typedef enum ConnexionMode ConnexionMode;
+
+struct ConnexionConfig {
+    int port;
+    ConnexionType type; // TCP | UDP
+    ConnexionMode mode; // source | puits
+    char * url;
+    int url_size;
+    int nb_mess;
+};
+
 
 // todo arguments
 void UDP_source() {
@@ -50,43 +67,76 @@ void UDP_source() {
 	printf("send aaaaaaaaaaaaaaaaa\n");
 }
 
+void UDP_Puits() {
+    char buff[1024];
+    memset(buff, 0, 1024);
+
+    int sk = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if ( sk == -1 ) {
+        printf("Erreur pendant la creation du socket\n");
+        exit(-1);
+    }
+    printf("on a bien créé le socket\n");
+    struct sockaddr_in adr;
+    memset((char *) &adr, 0, sizeof(adr));
+
+    adr.sin_family = AF_INET;
+    adr.sin_port = htons(5565); // todo take argument
+    adr.sin_addr.s_addr = INADDR_ANY;
+    bind(sk, (struct sockaddr * ) & adr, sizeof(adr));
+
+    struct sockaddr * adr_emeteur = NULL;
+    int p_long_adr_emeteur = sizeof(adr);
+    while ( true ) {
+        recvfrom(sk, buff, 1024, 0, adr_emeteur, (socklen_t *)&p_long_adr_emeteur);
+        printf("%s\n", buff);
+    }
+    close(sk); // ça ser à rien yass todo close socket
+}
 
 int main(int argc, char **argv) {
-	int c;
-	extern char *optarg;
-	extern int optind;
-	int nb_message = -1; /* Nb de messages à envoyer ou à recevoir, par défaut : 10 en émission, infini en réception */
-	int source = -1 ; /* 0=puits, 1=source */
-    enum ConnexionType connexion = None;
-    int port = atoi(argv[argc-1]); // todo tester cas erreur utilisateur
-    port = htons(port);
+    int c;
+    extern char *optarg;
+    extern int optind;
+
+    struct ConnexionConfig conf;
+    conf.port = atoi(argv[argc-1]); // todo tester cas erreur utilisateur
+    conf.port = htons(conf.port);
+
+    conf.nb_mess = -1;
+    conf.mode = NONE;
+    conf.type = NONE;
+    conf.url = NULL;
+    conf.url_size = -1;
+
+//	int nb_message = -1; /* Nb de messages à envoyer ou à recevoir, par défaut : 10 en émission, infini en réception */
+//	int source = -1 ; /* 0=puits, 1=source */
+//    enum ConnexionType connexion = NONE;
 
 	while ((c = getopt(argc, argv, "pn:us")) != -1) {
 		switch (c) {
 		case 'p':
-			if (source == 1) {
+			if ( conf.mode == Source ) {
 				printf("usage: cmd [-p|-s][-n ##]\n");
 				exit(1);
 			}
-            printf("set source to 0\n");
-			source = 0;
+			conf.mode = Puits;
 			break;
 
 		case 's':
-			if (source == 0) {
+			if ( conf.mode == Puits ) {
 				printf("usage: cmd [-p|-s][-n ##]\n");
 				exit(1) ;
 			}
-            printf("set source to 1\n");
-            source = 1;
+            conf.mode = Source;
 			break;
 
 		case 'n':
-			nb_message = atoi(optarg);
+            conf.nb_mess = atoi(optarg);
 			break;
 
         case 'u':
-            connexion = UDP;
+            conf.type = UDP;
             break;
 
 		default:
@@ -95,58 +145,36 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	if (source == -1) {
+	if ( conf.mode == NONE ) {
 		printf("usage: cmd [-p|-s][-n ##]\n");
 		exit(1) ;
 	}
 
-	if (source == 1) {
+	if ( conf.mode == Source ) {
         printf("on est dans le source\n");
-        if (connexion == UDP) {
+        if ( conf.type == UDP ) {
             UDP_source();
         }
-    } else {
+    } else { // recieve
         printf("on est dans le puits\n");
-        if (connexion == UDP) {
-            char buff[1024];
-            memset(buff, 0, 1024);
-
-            int sk = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-            if (sk == -1) {
-                printf("Erreur pendant la creation du socket\n");
-                exit(-1);
-            }
-            printf("on a bien créé le socket\n");
-            struct sockaddr_in adr;
-            memset((char *) &adr, 0, sizeof(adr));
-
-            adr.sin_family = AF_INET;
-            adr.sin_port = htons(5565); // todo take argument
-            adr.sin_addr.s_addr = INADDR_ANY;
-            bind(sk, (struct sockaddr * ) & adr, sizeof(adr));
-
-            struct sockaddr * adr_emeteur = NULL;
-            int p_long_adr_emeteur = sizeof(adr);
-            while ( true ) {
-                recvfrom(sk, buff, 1024, 0, adr_emeteur, (socklen_t *)&p_long_adr_emeteur);
-                printf("%s\n", buff);
-            }
-            close(sk); // ça ser à rien yass todo close socket
+        if ( conf.type == UDP ) {
+            UDP_Puits();
         }
     }
 
-	if (nb_message != -1) {
-		if (source == 1)
-			printf("nb de tampons à envoyer : %d\n", nb_message);
-		else
-			printf("nb de tampons à recevoir : %d\n", nb_message);
+	if (conf.nb_mess != -1) {
+		if (conf.mode == Source ) {
+            printf("nb de tampons à envoyer : %d\n", conf.nb_mess);
+        } else {
+            printf("nb de tampons à recevoir : %d\n", conf.nb_mess);
+        }
 	} else {
-		if (source == 1) {
-			nb_message = 10 ;
+		if (conf.mode == Source ) {
+			conf.nb_mess = 10 ;
 			printf("nb de tampons à envoyer = 10 par défaut\n");
-		} else
-		printf("nb de tampons à envoyer = infini\n");
-
+		} else {
+            printf("nb de tampons à recevoir = infini\n");
+        }
 	}
 }
 
