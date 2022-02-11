@@ -22,6 +22,34 @@ enum bool {false, true};
 enum ConnexionType {None, UDP, TCP};
 typedef enum bool bool;
 
+// todo arguments
+void UDP_source() {
+	int sk = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if ( sk == -1 ) {
+		printf("Erreur pendant la creation du socket\n");
+		exit(-1);
+	}
+	printf("on a bien créé le socket\n");
+	struct sockaddr_in adr;
+	memset((char*)&adr,0,sizeof(adr));
+
+	adr.sin_family = AF_INET;
+	adr.sin_port = htons(5565); // todo take argument
+
+	struct hostent *hp = gethostbyname("insa-20161"); // todo take argument
+	if ( hp == NULL ) {
+		printf("erreur getbyhostname\n");
+		exit(1);
+	}
+	memcpy((char*)&adr.sin_addr.s_addr, hp->h_addr_list[0], hp->h_length);
+	printf("on a bien créé l'adresse\n");
+	char buff[] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+	int msg_s = sendto(sk,buff,sizeof(buff)/sizeof(buff[0]), 0, (struct sockaddr* )&adr, sizeof(adr));
+	printf("send %d\n",msg_s);
+	close(sk);
+	printf("send aaaaaaaaaaaaaaaaa\n");
+}
+
 
 int main(int argc, char **argv) {
 	int c;
@@ -73,31 +101,26 @@ int main(int argc, char **argv) {
 	if (source == 1)
 		printf("on est dans le source\n");
         if ( connexion == UDP ) {
-            int sk = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-            if ( sk == -1 ) {
-                printf("Erreur pendant la creation du socket\n");
-                exit(-1);
-            }
-            printf("on a bien créé le socket\n");
-            struct sockaddr_in adr;
-            adr.sin_family = AF_INET;
-            adr.sin_port = 5565; // todo take argument
-
-            struct hostent *hp = gethostbyname("insa-20161"); // todo take argument
-            if ( hp == NULL ) {
-                printf("erreur getbyhostname\n");
-                exit(1);
-            }
-            memcpy((char*)&adr.sin_addr.s_addr, hp->h_addr_list[0], hp->h_length);
-            printf("on a bien créé l'adresse\n");
-            char buff[] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-            sendto(sk,buff,sizeof(buff)/sizeof(buff[0]), 0, (struct sockaddr* )&adr, sizeof(adr));
-            close(sk);
-            printf("send aaaaaaaaaaaaaaaaa\n");
+			UDP_source();
         }
 
 	else
 		printf("on est dans le puits\n");
+		if ( connexion == UDP ) {
+			int sk = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+			if ( sk == -1 ) {
+				printf("Erreur pendant la creation du socket\n");
+				exit(-1);
+			}
+			printf("on a bien créé le socket\n");
+			struct sockaddr_in adr;
+			memset((char*)&adr,0,sizeof(adr));
+
+			adr.sin_family = AF_INET;
+			adr.sin_port = htons(5565); // todo take argument
+			adr.sin_addr.s_addr = INADDR_ANY;
+
+        }
 
 	if (nb_message != -1) {
 		if (source == 1)
