@@ -18,14 +18,22 @@ données du réseau */
 /* pour la gestion des erreurs */
 #include <errno.h>
 
-void main (int argc, char **argv)
-{
+enum bool {false, true};
+enum ConnexionType {None, UDP, TCP};
+typedef enum bool bool;
+
+
+int main(int argc, char **argv) {
 	int c;
 	extern char *optarg;
 	extern int optind;
 	int nb_message = -1; /* Nb de messages à envoyer ou à recevoir, par défaut : 10 en émission, infini en réception */
 	int source = -1 ; /* 0=puits, 1=source */
-	while ((c = getopt(argc, argv, "pn:s")) != -1) {
+    enum ConnexionType connexion = None;
+    int port = atoi(argv[argc-1]); // todo tester cas erreur utilisateur
+    port = htons(port);
+
+	while ((c = getopt(argc, argv, "pn:su")) != -1) {
 		switch (c) {
 		case 'p':
 			if (source == 1) {
@@ -47,6 +55,10 @@ void main (int argc, char **argv)
 			nb_message = atoi(optarg);
 			break;
 
+        case 'u':
+            connexion = UDP;
+            break;
+
 		default:
 			printf("usage: cmd [-p|-s][-n ##]\n");
 			break;
@@ -60,6 +72,30 @@ void main (int argc, char **argv)
 
 	if (source == 1)
 		printf("on est dans le source\n");
+        if ( connexion == UDP ) {
+            int sk = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+            if ( sk == -1 ) {
+                printf("Erreur pendant la creation du socket\n");
+                exit(-1);
+            }
+            printf("on a bien créé le socket\n");
+            struct sockaddr_in adr;
+            adr.sin_family = AF_INET;
+            adr.sin_port = 5565; // todo take argument
+
+            struct hostent *hp = gethostbyname("insa-20161"); // todo take argument
+            if ( hp == NULL ) {
+                printf("erreur getbyhostname\n");
+                exit(1);
+            }
+            memcpy((char*)&adr.sin_addr.s_addr, hp->h_addr_list[0], hp->h_length);
+            printf("on a bien créé l'adresse\n");
+            char buff[] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+            sendto(sk,buff,sizeof(buff)/sizeof(buff[0]), 0, (struct sockaddr* )&adr, sizeof(adr));
+            close(sk);
+            printf("send aaaaaaaaaaaaaaaaa\n");
+        }
+
 	else
 		printf("on est dans le puits\n");
 
