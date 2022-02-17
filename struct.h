@@ -1,6 +1,9 @@
 #define NONE 0
 #define todo printf("Not implemented yet\n");exit(-1);
 
+enum bool {false, true};
+typedef enum bool bool;
+
 enum ConnexionType {UDP=1, TCP}; // | NONE
 typedef enum ConnexionType ConnexionType;
 
