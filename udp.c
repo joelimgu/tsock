@@ -41,7 +41,6 @@ void UDP_source(struct ConnexionConfig * conf) {
 		printf("Erreur pendant la creation du socket\n");
 		exit(-1);
 	}
-	printf("on a bien créé le socket\n");
 	struct sockaddr_in adr;
 	memset((char*)&adr,0,sizeof(adr));
 
@@ -50,11 +49,11 @@ void UDP_source(struct ConnexionConfig * conf) {
 
 	struct hostent *hp = gethostbyname(conf->url);
 	if ( hp == NULL ) {
-		printf("erreur getbyhostname\n");
-		exit(1);
+		printf("Erreur getbyhostname\n");
+		exit(-2);
 	}
 	memcpy((char*)&adr.sin_addr.s_addr, hp->h_addr_list[0], hp->h_length);
-	printf("on a bien créé l'adresse\n");
+
 
     send_UDP_message(sk, (struct sockaddr* )&adr, conf);
 
@@ -71,7 +70,6 @@ void UDP_puits(struct ConnexionConfig * conf) {
         printf("Erreur pendant la creation du socket\n");
         exit(-1);
     }
-    printf("on a bien créé le socket\n");
     struct sockaddr_in adr;
     memset((char *) &adr, 0, sizeof(adr));
 

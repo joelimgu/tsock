@@ -4,6 +4,15 @@
 #include <unistd.h>
 /* déclaration des types de base */
 #include <sys/types.h>
+/* constantes relatives aux domaines, types et protocoles */
+#include <sys/socket.h>
+/* constantes et structures propres au domaine UNIX */
+#include <sys/un.h>
+/* constantes et structures propres au domaine INTERNET */
+#include <netinet/in.h>
+/* structures retournées par les fonctions de gestion de la base de
+données du réseau */
+#include <netdb.h>
 /* pour les entrées/sorties */
 #include <stdio.h>
 /* pour la gestion des erreurs */
@@ -50,7 +59,7 @@ int main(int argc, char **argv) {
 		switch (c) {
 		case 'p':
 			if ( conf.mode == Source ) {
-				printf("usage: cmd [-p|-s][-n ##]\n");
+				printf("usage: cmd [-p|-s][-n ##][-l ##]\n");
 				exit(1);
 			}
 			conf.mode = Puits;
@@ -58,7 +67,7 @@ int main(int argc, char **argv) {
 
 		case 's': // source
 			if ( conf.mode == Puits ) {
-				printf("usage: cmd [-p|-s][-n ##]\n");
+				printf("usage: cmd [-p|-s][-n ##][-l ##]\n");
 				exit(1) ;
 			}
             conf.mode = Source;
@@ -79,25 +88,23 @@ int main(int argc, char **argv) {
             printf("long mess: %d\n", conf.longueur_mess);
 
 		default:
-			printf("usage: cmd [-p|-s][-n ##]\n");
+			printf("usage: cmd [-p|-s][-n ##][-l ##]\n");
 			break;
 		}
 	}
 
 	if ( conf.mode == NONE ) {
-		printf("usage: cmd [-p|-s][-n ##]\n");
+		printf("usage: cmd [-p|-s][-n ##][-l ##]\n");
 		exit(1) ;
 	}
 
 	if ( conf.mode == Source ) {
-        printf("on est dans le source\n");
         if ( conf.type == UDP ) {
             UDP_source(&conf);
         } else {
             TCP_source(&conf);
         }
-    } else { // recieve
-        printf("on est dans le puits\n");
+    } else { 
         if ( conf.type == UDP ) {
             UDP_puits(&conf);
         } else {

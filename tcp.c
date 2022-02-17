@@ -17,7 +17,7 @@ données du réseau */
 #include <stdio.h>
 /* pour la gestion des erreurs */
 #include <errno.h>
-/* structures et types */ 9
+/* structures et types */ 
 #include "struct.h"
 
 
@@ -47,7 +47,7 @@ void TCP_source(struct ConnexionConfig * conf){
         printf("Erreur pendant la creation du socket\n");
         exit(-1);
     }
-    printf("on a bien créé le socket\n");
+
 
     struct sockaddr_in adr;
 	memset((char*)&adr,0,sizeof(adr));
@@ -58,15 +58,14 @@ void TCP_source(struct ConnexionConfig * conf){
 	struct hostent *hp = gethostbyname(conf->url); 
 	if ( hp == NULL ) {
 		printf("erreur getbyhostname\n");
-		exit(1);
+		exit(-2);
 	}
 
     memcpy((char*)&adr.sin_addr.s_addr, hp->h_addr_list[0], hp->h_length);
-	printf("on a bien créé l'adresse\n");
     int connection = connect(sk,(struct sockaddr* )&adr, sizeof(adr));
     if ( connection == -1 ){
-        printf("erreur de connexion\n");
-        exit(-2);
+        printf("Erreur de connexion\n");
+        exit(-3);
     }
 
     send_TCP_message(sk, conf);
@@ -81,7 +80,7 @@ void TCP_puits(struct ConnexionConfig * conf){
         printf("Erreur pendant la creation du socket\n");
         exit(-1);
     }
-    printf("on a bien créé le socket\n");
+    
 
     struct sockaddr_in adr;
     memset((char *) &adr, 0, sizeof(adr));
@@ -91,7 +90,30 @@ void TCP_puits(struct ConnexionConfig * conf){
     adr.sin_addr.s_addr = INADDR_ANY;
     int binde = bind(sk, (struct sockaddr * ) & adr, sizeof(adr));
     if ( binde == -1){
-        printf("erreur lors du bind\n");
-        exit(-4); // todo uniformiser les codes d'erreur?
+        printf("Erreur lors du bind\n");
+        exit(-4); 
+    }
+    
+    struct sockaddr_in adr_client;
+    int long_adr_client = sizeof(adr_client);
+    listen(sk,1);
+    int sock_connexion = accept(sk,(struct sockaddr*) &adr_client,(socklen_t *)&long_adr_client);
+    if ( sock_connexion == -1 ){
+        printf("Erreur dans l'appel à la primitive accept\n");
+        exit(-5);
+    }
+
+    
+    int max = 10 ; /* nb de messages attendus */
+    int lg_max = 30 ; /* taille max de chaque message */
+    char buff[lg_max];
+    memset(buff, 0, lg_max);
+
+    for (int i=0 ; i < max ; i ++) {
+        int lg_rec = read(sock_connexion, buff, lg_max);
+        if (lg_rec == -1){
+            printf("Echec du read\n") ; exit(1) ;
+        }
+        afficher_message(buff,lg_rec, i, conf);
     }
 }
