@@ -38,13 +38,26 @@ struct ConnexionConfig {
     char * url;
     int url_size;
     int nb_mess;
+    int longueur_mess;
 };
 
 
 /*
-    port must be passed with C's default integer binaryu representation the funcion will perform the necessary conversions
+    @param creates a message and writes it in the provided adress
+    @param mess_len 
+    @param conf
 */
-void UDP_source(struct ConnexionConfig conf) {
+void create_message_line(char * mess, int mess_len, char c, struct ConnexionConfig * conf) {
+    for ( int i = 0; i < mess_len; i++ ) {
+        mess[i] = c;
+    }
+}
+
+
+/*
+    @param conf is a read only reference, it does not modify it's content. Note: conf.port must be passed with C's default integer binaryu representation the funcion will perform the necessary conversions
+*/
+void UDP_source(struct ConnexionConfig * conf) {
 	int sk = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if ( sk == -1 ) {
 		printf("Erreur pendant la creation du socket\n");
@@ -55,9 +68,9 @@ void UDP_source(struct ConnexionConfig conf) {
 	memset((char*)&adr,0,sizeof(adr));
 
 	adr.sin_family = AF_INET;
-	adr.sin_port = htons(conf.port); // todo take argument
+	adr.sin_port = htons(conf->port); // todo take argument
 
-	struct hostent *hp = gethostbyname(conf.url); // todo take argument
+	struct hostent *hp = gethostbyname(conf->url); // todo take argument
 	if ( hp == NULL ) {
 		printf("erreur getbyhostname\n");
 		exit(1);
@@ -71,7 +84,11 @@ void UDP_source(struct ConnexionConfig conf) {
 	printf("send aaaaaaaaaaaaaaaaa\n");
 }
 
-void UDP_puits() {
+
+/*
+    @param conf is a read only reference, it does not modify it's content. Note: conf.port must be passed with C's default integer binaryu representation the funcion will perform the necessary conversions
+*/
+void UDP_puits(struct ConnexionConfig * conf) {
     char buff[1024];
     memset(buff, 0, 1024);
 
@@ -98,12 +115,18 @@ void UDP_puits() {
     close(sk); // ça ser à rien yass todo close socket
 }
 
-void TCP_source() {
+
+/*
+    @param conf is a read only reference, it does not modify it's content. Note: conf.port must be passed with C's default integer binaryu representation the funcion will perform the necessary conversions
+*/
+void TCP_source(struct ConnexionConfig * conf) {
     todo
 }
 
-
-void TCP_puits() {
+/*
+    @param conf is a read only reference, it does not modify it's content. Note: conf.port must be passed with C's default integer binaryu representation the funcion will perform the necessary conversions
+*/
+void TCP_puits(struct ConnexionConfig * conf) {
     todo
 }
 
@@ -112,11 +135,12 @@ void set_config_defaults(struct ConnexionConfig * conf, int argc, char **argv) {
     conf->port = atoi(argv[argc-1]); // todo tester cas erreur utilisateur
     // conf->port = htons(conf->port); // pas necessaire
 
-    conf->nb_mess = -1;
+    conf->nb_mess = 10;
     conf->mode = NONE;
     conf->type = TCP;
     conf->url = NULL;
     conf->url_size = -1;
+    conf->longueur_mess = 30;
 }
 
 
@@ -128,8 +152,8 @@ int main(int argc, char **argv) {
     struct ConnexionConfig conf;
     set_config_defaults(&conf, argc, argv);
     
+	while ((c = getopt(argc, argv, "pn:usl:")) != -1) {
 
-	while ((c = getopt(argc, argv, "pn:us")) != -1) {
 		switch (c) {
 		case 'p':
 			if ( conf.mode == Source ) {
@@ -158,6 +182,10 @@ int main(int argc, char **argv) {
             conf.type = UDP;
             break;
 
+        case 'l':
+            conf.longueur_mess = atoi(optarg);
+            printf("long mess: %d\n", conf.longueur_mess);
+
 		default:
 			printf("usage: cmd [-p|-s][-n ##]\n");
 			break;
@@ -172,16 +200,16 @@ int main(int argc, char **argv) {
 	if ( conf.mode == Source ) {
         printf("on est dans le source\n");
         if ( conf.type == UDP ) {
-            UDP_source(conf);
+            UDP_source(&conf);
         } else {
-            TCP_source();
+            TCP_source(&conf);
         }
     } else { // recieve
         printf("on est dans le puits\n");
         if ( conf.type == UDP ) {
-            UDP_puits();
+            UDP_puits(&conf);
         } else {
-            TCP_puits();
+            TCP_puits(&conf);
         }
     }
 
