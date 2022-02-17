@@ -9,7 +9,7 @@
 /* pour la gestion des erreurs */
 #include <errno.h>
 /* structures et types */ 
-#include <struct.h>
+#include "struct.h"
 
 
 
