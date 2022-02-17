@@ -57,10 +57,45 @@ void afficher_message(char *message, int lg) {
     @param mess_len 
     @param conf
 */
-void create_message_line(char * mess, int mess_len, char c, struct ConnexionConfig * conf) {
+void create_message_line(char * mess, int mess_len, char c) {
     for ( int i = 0; i < mess_len; i++ ) {
         mess[i] = c;
     }
+}
+
+
+void send_UDP_message(int sk, struct sockaddr* adr, struct ConnexionConfig * conf) {
+    char * buff = malloc(sizeof(char)*conf->longueur_mess);
+    int c = (int)'a';
+    
+    for ( int n = 0; n < conf->nb_mess; n++ ) {
+        create_message_line(buff, conf->longueur_mess,(char)(c + n));
+        sendto(sk,buff,conf->longueur_mess*sizeof(char), 0, (struct sockaddr* )adr, sizeof(struct sockaddr_in));
+        printf("SOURCE: Envoi nº %d (%d) [%s]\n", n+1, conf->longueur_mess, buff);
+    }
+
+    free(buff);
+}
+
+
+
+void send_TCP_message(int sk, struct ConnexionConfig * conf) {
+    char * buff = malloc(sizeof(char)*conf->longueur_mess);
+    int c = (int)'a';
+    int env_res;
+
+    for ( int n = 0; n < conf->nb_mess; n++ ) {
+        create_message_line(buff, conf->longueur_mess,(char)(c + n));
+        env_res = write(sk,buff,conf->longueur_mess*sizeof(char));
+        printf("SOURCE: Envoi nº %d (%d) [%s]\n", n+1, conf->longueur_mess, buff);
+
+        if ( env_res == -1 ) {
+            printf("erreur à l'envoi du message");
+            exit(-3);
+        }
+    }
+
+    free(buff);
 }
 
 
@@ -78,20 +113,22 @@ void UDP_source(struct ConnexionConfig * conf) {
 	memset((char*)&adr,0,sizeof(adr));
 
 	adr.sin_family = AF_INET;
-	adr.sin_port = htons(conf->port); // todo take argument
+	adr.sin_port = htons(conf->port); 
 
-	struct hostent *hp = gethostbyname(conf->url); // todo take argument
+	struct hostent *hp = gethostbyname(conf->url);
 	if ( hp == NULL ) {
 		printf("erreur getbyhostname\n");
 		exit(1);
 	}
 	memcpy((char*)&adr.sin_addr.s_addr, hp->h_addr_list[0], hp->h_length);
 	printf("on a bien créé l'adresse\n");
-	char buff[] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-	int msg_s = sendto(sk,buff,sizeof(buff)/sizeof(buff[0]), 0, (struct sockaddr* )&adr, sizeof(adr));
-	printf("send %d\n",msg_s);
+
+    send_UDP_message(sk, (struct sockaddr* )&adr, conf);
+
+	// char buff[] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+	// int msg_s = sendto(sk,buff,sizeof(buff)/sizeof(buff[0]), 0, (struct sockaddr* )&adr, sizeof(adr));
+	// printf("send %d\n",msg_s);
 	close(sk);
-	printf("send aaaaaaaaaaaaaaaaa\n");
 }
 
 
@@ -112,14 +149,14 @@ void UDP_puits(struct ConnexionConfig * conf) {
     memset((char *) &adr, 0, sizeof(adr));
 
     adr.sin_family = AF_INET;
-    adr.sin_port = htons(5565); // todo take argument
+    adr.sin_port = htons(conf->port); // todo take argument
     adr.sin_addr.s_addr = INADDR_ANY;
     bind(sk, (struct sockaddr * ) & adr, sizeof(adr));
 
     struct sockaddr * adr_emeteur = NULL;
     int p_long_adr_emeteur = sizeof(adr);
     while ( true ) {
-        recvfrom(sk, buff, 1024, 0, adr_emeteur,&p_long_adr_emeteur);
+        recvfrom(sk, buff, 1024, 0, adr_emeteur,(socklen_t *)&p_long_adr_emeteur);
         printf("%s\n", buff);
     }
     close(sk); // ça ser à rien yass todo close socket
@@ -127,7 +164,7 @@ void UDP_puits(struct ConnexionConfig * conf) {
 
 
 // connect : "client"
-void TCP_source(){
+void TCP_source(struct ConnexionConfig * conf){
     int sk = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if ( sk == -1 ) {
         printf("Erreur pendant la creation du socket\n");
@@ -139,9 +176,9 @@ void TCP_source(){
 	memset((char*)&adr,0,sizeof(adr));
 
 	adr.sin_family = AF_INET;
-	adr.sin_port = htons(5566); // todo take argument
+	adr.sin_port = htons(conf->port); // todo take argument
 
-	struct hostent *hp = gethostbyname("insa-20170"); // todo take argument
+	struct hostent *hp = gethostbyname(conf->url); // todo take argument
 	if ( hp == NULL ) {
 		printf("erreur getbyhostname\n");
 		exit(1);
@@ -154,19 +191,14 @@ void TCP_source(){
         printf("erreur de connexion\n");
         exit(-2);
     }
-    char buff[] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-    int envoye = write(sk,buff,sizeof(buff));
-    if ( envoye == -1 ){
-        printf("erreur à l'envoi du message");
-        exit(-3);
-    }else{
-        printf("votre message de taille %d a été envoyé\n",envoye);
-    }
+
+    send_TCP_message(sk, conf);
+
 }
 
 
 // accept : "serveur"
-void TCP_puits(){
+void TCP_puits(struct ConnexionConfig * conf){
     int sk = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if ( sk == -1 ) {
         printf("Erreur pendant la creation du socket\n");
@@ -178,7 +210,7 @@ void TCP_puits(){
     memset((char *) &adr, 0, sizeof(adr));
 
     adr.sin_family = AF_INET;
-    adr.sin_port = htons(5566); // todo take argument
+    adr.sin_port = htons(conf->port); // todo take argument
     adr.sin_addr.s_addr = INADDR_ANY;
     int binde = bind(sk, (struct sockaddr * ) & adr, sizeof(adr));
     if ( binde == -1){
@@ -190,7 +222,7 @@ void TCP_puits(){
     struct sockaddr_in adr_client;
     int long_adr_client = sizeof(adr_client);
     listen(sk,1);
-    int sock_connexion = accept(sk,(struct sockaddr*) &adr_client,&long_adr_client);
+    int sock_connexion = accept(sk,(struct sockaddr*) &adr_client,(socklen_t *)&long_adr_client);
     if ( sock_connexion == -1 ){
         printf("erreur dans l'appel à la primitive accept\n");
         perror("Error");
