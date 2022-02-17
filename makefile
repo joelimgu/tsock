@@ -1,5 +1,5 @@
-tsock : main.o tcp.o udp.o
-	gcc -o tsock main.o tcp.o udp.o
+tsock : main.o tcp.o udp.o messages.o
+	gcc -o tsock main.o tcp.o udp.o messages.o
 
 
 main.o : main.c
@@ -13,6 +13,8 @@ tcp.o : tcp.c
 udp.o : udp.c
 	gcc -c -Wall udp.c
 
+messages.o : messages.c
+	gcc -c -Wall messages.c
 
 clean :
 	rm -f *.o
