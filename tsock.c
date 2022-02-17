@@ -42,12 +42,13 @@ struct ConnexionConfig {
 };
 
 
-void afficher_message(char *message, int lg) {
+void afficher_message(char *message, int lg, int nb_mess, struct ConnexionConfig * conf) {
     int i;
-    printf("message construit : ");
+    printf("PUITS: Reception nº %d (%d) [",nb_mess, conf->longueur_mess);
     for (i=0;i<lg;i++){
-        printf("%c", message[i]); printf("\n");
-    } 
+        printf("%c", message[i]);
+    }
+    printf("]\n");
 }
 
 
@@ -125,9 +126,6 @@ void UDP_source(struct ConnexionConfig * conf) {
 
     send_UDP_message(sk, (struct sockaddr* )&adr, conf);
 
-	// char buff[] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-	// int msg_s = sendto(sk,buff,sizeof(buff)/sizeof(buff[0]), 0, (struct sockaddr* )&adr, sizeof(adr));
-	// printf("send %d\n",msg_s);
 	close(sk);
 }
 
@@ -137,6 +135,7 @@ void UDP_source(struct ConnexionConfig * conf) {
 */
 void UDP_puits(struct ConnexionConfig * conf) {
     char buff[1024];
+    int mess_counter = 0;
     memset(buff, 0, 1024);
 
     int sk = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -149,17 +148,19 @@ void UDP_puits(struct ConnexionConfig * conf) {
     memset((char *) &adr, 0, sizeof(adr));
 
     adr.sin_family = AF_INET;
-    adr.sin_port = htons(conf->port); // todo take argument
+    adr.sin_port = htons(conf->port);
     adr.sin_addr.s_addr = INADDR_ANY;
     bind(sk, (struct sockaddr * ) & adr, sizeof(adr));
 
     struct sockaddr * adr_emeteur = NULL;
     int p_long_adr_emeteur = sizeof(adr);
+
     while ( true ) {
         recvfrom(sk, buff, 1024, 0, adr_emeteur,(socklen_t *)&p_long_adr_emeteur);
-        printf("%s\n", buff);
+        mess_counter++;
+        printf("PUITS: Reception nº %d (%d) [%s]\n",mess_counter, conf->longueur_mess, buff);
     }
-    close(sk); // ça ser à rien yass todo close socket
+    close(sk); // inaccesible code
 }
 
 
@@ -176,9 +177,9 @@ void TCP_source(struct ConnexionConfig * conf){
 	memset((char*)&adr,0,sizeof(adr));
 
 	adr.sin_family = AF_INET;
-	adr.sin_port = htons(conf->port); // todo take argument
+	adr.sin_port = htons(conf->port); 
 
-	struct hostent *hp = gethostbyname(conf->url); // todo take argument
+	struct hostent *hp = gethostbyname(conf->url); 
 	if ( hp == NULL ) {
 		printf("erreur getbyhostname\n");
 		exit(1);
@@ -210,7 +211,7 @@ void TCP_puits(struct ConnexionConfig * conf){
     memset((char *) &adr, 0, sizeof(adr));
 
     adr.sin_family = AF_INET;
-    adr.sin_port = htons(conf->port); // todo take argument
+    adr.sin_port = htons(conf->port);
     adr.sin_addr.s_addr = INADDR_ANY;
     int binde = bind(sk, (struct sockaddr * ) & adr, sizeof(adr));
     if ( binde == -1){
@@ -240,14 +241,13 @@ void TCP_puits(struct ConnexionConfig * conf){
         if (lg_rec == -1){
             printf("échec du read\n") ; exit(1) ;
         }
-        afficher_message(buff,lg_rec);
+        afficher_message(buff,lg_rec, i, conf);
     }
 } 
 
 
 void set_config_defaults(struct ConnexionConfig * conf, int argc, char **argv) {
     conf->port = atoi(argv[argc-1]); // todo tester cas erreur utilisateur
-    // conf->port = htons(conf->port); // pas necessaire
 
     conf->nb_mess = 10;
     conf->mode = NONE;
@@ -275,9 +275,6 @@ int main(int argc, char **argv) {
     conf.url = NULL;
     conf.url_size = -1;
 
-//	int nb_message = -1; /* Nb de messages à envoyer ou à recevoir, par défaut : 10 en émission, infini en réception */
-//	int source = -1 ; /* 0=puits, 1=source */
-//    enum ConnexionType connexion = NONE;
 
 
     set_config_defaults(&conf, argc, argv);
@@ -301,7 +298,6 @@ int main(int argc, char **argv) {
             conf.mode = Source;
             conf.url = argv[argc - 2];
             conf.url_size = strlen(conf.url);
-            // printf("set url to %s, wiht len %d", conf.url, conf.url_size);
 			break;
 
 		case 'n':
