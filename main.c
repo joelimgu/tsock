@@ -24,20 +24,6 @@ void set_config_defaults(struct ConnexionConfig * conf, int argc, char **argv) {
     conf->longueur_mess = 30;
 }
 
-void afficher_message(char *message, int lg, int nb_mess, struct ConnexionConfig * conf) {
-    int i;
-    printf("PUITS: Reception nº %d (%d) [",nb_mess, conf->longueur_mess);
-    for (i=0;i<lg;i++){
-        printf("%c", message[i]);
-    }
-    printf("]\n");
-}
-
-void create_message_line(char * mess, int mess_len, char c) {
-    for ( int i = 0; i < mess_len; i++ ) {
-        mess[i] = c;
-    }
-}
 
 int main(int argc, char **argv) {
     int c;

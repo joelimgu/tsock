@@ -28,3 +28,7 @@ void send_UDP_message(int sk, struct sockaddr* adr, struct ConnexionConfig * con
 void UDP_source(struct ConnexionConfig * conf);
 
 void UDP_puits(struct ConnexionConfig * conf);
+
+void afficher_message(char *message, int lg, int nb_mess, struct ConnexionConfig * conf);
+
+void create_message_line(char * mess, int mess_len, char c);

@@ -101,7 +101,7 @@ void send_TCP_message(int sk, struct ConnexionConfig * conf) {
 
 
 /*
-    @param conf is a read only reference, it does not modify it's content. Note: conf.port must be passed with C's default integer binaryu representation the funcion will perform the necessary conversions
+    @param conf is a read only reference, it does not modify it's content. Note: conf.port must be passed with C's default integer binary representation, the function will perform the necessary conversions
 */
 void UDP_source(struct ConnexionConfig * conf) {
 	int sk = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
