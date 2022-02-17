@@ -16,3 +16,15 @@ struct ConnexionConfig {
     int nb_mess;
     int longueur_mess;
 };
+
+void send_TCP_message(int sk, struct ConnexionConfig * conf);
+
+void TCP_source(struct ConnexionConfig * conf);
+
+void TCP_puits(struct ConnexionConfig * conf);
+
+void send_UDP_message(int sk, struct sockaddr* adr, struct ConnexionConfig * conf);
+
+void UDP_source(struct ConnexionConfig * conf);
+
+void UDP_puits(struct ConnexionConfig * conf);

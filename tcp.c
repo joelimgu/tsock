@@ -17,7 +17,7 @@ données du réseau */
 #include <stdio.h>
 /* pour la gestion des erreurs */
 #include <errno.h>
-/* structures et types */ 
+/* structures et types */ 9
 #include "struct.h"
 
 
@@ -94,3 +94,4 @@ void TCP_puits(struct ConnexionConfig * conf){
         printf("erreur lors du bind\n");
         exit(-4); // todo uniformiser les codes d'erreur?
     }
+}
