@@ -42,6 +42,16 @@ struct ConnexionConfig {
 };
 
 
+void afficher_message(char *message, int lg) {
+    int i;
+    printf("message construit : ");
+    for (i=0;i<lg;i++){
+        printf("%c", message[i]); printf("\n");
+    } 
+}
+
+
+
 /*
     @param creates a message and writes it in the provided adress
     @param mess_len 
@@ -109,26 +119,98 @@ void UDP_puits(struct ConnexionConfig * conf) {
     struct sockaddr * adr_emeteur = NULL;
     int p_long_adr_emeteur = sizeof(adr);
     while ( true ) {
-        recvfrom(sk, buff, 1024, 0, adr_emeteur, (socklen_t *)&p_long_adr_emeteur);
+        recvfrom(sk, buff, 1024, 0, adr_emeteur,&p_long_adr_emeteur);
         printf("%s\n", buff);
     }
     close(sk); // ça ser à rien yass todo close socket
 }
 
 
-/*
-    @param conf is a read only reference, it does not modify it's content. Note: conf.port must be passed with C's default integer binaryu representation the funcion will perform the necessary conversions
-*/
-void TCP_source(struct ConnexionConfig * conf) {
-    todo
+// connect : "client"
+void TCP_source(){
+    int sk = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if ( sk == -1 ) {
+        printf("Erreur pendant la creation du socket\n");
+        exit(-1);
+    }
+    printf("on a bien créé le socket\n");
+
+    struct sockaddr_in adr;
+	memset((char*)&adr,0,sizeof(adr));
+
+	adr.sin_family = AF_INET;
+	adr.sin_port = htons(5566); // todo take argument
+
+	struct hostent *hp = gethostbyname("insa-20170"); // todo take argument
+	if ( hp == NULL ) {
+		printf("erreur getbyhostname\n");
+		exit(1);
+	}
+
+    memcpy((char*)&adr.sin_addr.s_addr, hp->h_addr_list[0], hp->h_length);
+	printf("on a bien créé l'adresse\n");
+    int connection = connect(sk,(struct sockaddr* )&adr, sizeof(adr));
+    if ( connection == -1 ){
+        printf("erreur de connexion\n");
+        exit(-2);
+    }
+    char buff[] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    int envoye = write(sk,buff,sizeof(buff));
+    if ( envoye == -1 ){
+        printf("erreur à l'envoi du message");
+        exit(-3);
+    }else{
+        printf("votre message de taille %d a été envoyé\n",envoye);
+    }
 }
 
-/*
-    @param conf is a read only reference, it does not modify it's content. Note: conf.port must be passed with C's default integer binaryu representation the funcion will perform the necessary conversions
-*/
-void TCP_puits(struct ConnexionConfig * conf) {
-    todo
-}
+
+// accept : "serveur"
+void TCP_puits(){
+    int sk = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if ( sk == -1 ) {
+        printf("Erreur pendant la creation du socket\n");
+        exit(-1);
+    }
+    printf("on a bien créé le socket\n");
+
+    struct sockaddr_in adr;
+    memset((char *) &adr, 0, sizeof(adr));
+
+    adr.sin_family = AF_INET;
+    adr.sin_port = htons(5566); // todo take argument
+    adr.sin_addr.s_addr = INADDR_ANY;
+    int binde = bind(sk, (struct sockaddr * ) & adr, sizeof(adr));
+    if ( binde == -1){
+        printf("erreur lors du bind\n");
+        exit(-4); // todo uniformiser les codes d'erreur?
+    }
+
+
+    struct sockaddr_in adr_client;
+    int long_adr_client = sizeof(adr_client);
+    listen(sk,1);
+    int sock_connexion = accept(sk,(struct sockaddr*) &adr_client,&long_adr_client);
+    if ( sock_connexion == -1 ){
+        printf("erreur dans l'appel à la primitive accept\n");
+        perror("Error");
+        exit(-5);
+    }
+
+    
+    int max = 10 ; /* nb de messages attendus */
+    int lg_max = 30 ; /* taille max de chaque message */
+    char buff[lg_max];
+    memset(buff, 0, lg_max);
+
+    for (int i=0 ; i < max ; i ++) {
+        int lg_rec = read(sock_connexion, buff, lg_max);
+        if (lg_rec == -1){
+            printf("échec du read\n") ; exit(1) ;
+        }
+        afficher_message(buff,lg_rec);
+    }
+} 
 
 
 void set_config_defaults(struct ConnexionConfig * conf, int argc, char **argv) {
@@ -144,12 +226,28 @@ void set_config_defaults(struct ConnexionConfig * conf, int argc, char **argv) {
 }
 
 
+
 int main(int argc, char **argv) {
     int c;
     extern char *optarg;
     extern int optind;
 
     struct ConnexionConfig conf;
+
+    conf.port = atoi(argv[argc-1]); // todo tester cas erreur utilisateur
+    conf.port = htons(conf.port);
+
+    conf.nb_mess = -1;
+    conf.mode = NONE;
+    conf.type = NONE;
+    conf.url = NULL;
+    conf.url_size = -1;
+
+//	int nb_message = -1; /* Nb de messages à envoyer ou à recevoir, par défaut : 10 en émission, infini en réception */
+//	int source = -1 ; /* 0=puits, 1=source */
+//    enum ConnexionType connexion = NONE;
+
+
     set_config_defaults(&conf, argc, argv);
     
 	while ((c = getopt(argc, argv, "pn:usl:")) != -1) {
