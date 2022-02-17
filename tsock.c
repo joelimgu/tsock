@@ -19,6 +19,8 @@ données du réseau */
 #include <errno.h>
 
 #define NONE 0
+#define todo printf("Not implemented yet\n");exit(-1);
+
 
 enum bool {false, true};
 typedef enum bool bool;
@@ -39,8 +41,10 @@ struct ConnexionConfig {
 };
 
 
-// todo arguments
-void UDP_source() {
+/*
+    port must be passed with C's default integer binaryu representation the funcion will perform the necessary conversions
+*/
+void UDP_source(struct ConnexionConfig conf) {
 	int sk = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if ( sk == -1 ) {
 		printf("Erreur pendant la creation du socket\n");
@@ -51,9 +55,9 @@ void UDP_source() {
 	memset((char*)&adr,0,sizeof(adr));
 
 	adr.sin_family = AF_INET;
-	adr.sin_port = htons(5565); // todo take argument
+	adr.sin_port = htons(conf.port); // todo take argument
 
-	struct hostent *hp = gethostbyname("insa-20161"); // todo take argument
+	struct hostent *hp = gethostbyname(conf.url); // todo take argument
 	if ( hp == NULL ) {
 		printf("erreur getbyhostname\n");
 		exit(1);
@@ -67,7 +71,7 @@ void UDP_source() {
 	printf("send aaaaaaaaaaaaaaaaa\n");
 }
 
-void UDP_Puits() {
+void UDP_puits() {
     char buff[1024];
     memset(buff, 0, 1024);
 
@@ -94,24 +98,36 @@ void UDP_Puits() {
     close(sk); // ça ser à rien yass todo close socket
 }
 
+void TCP_source() {
+    todo
+}
+
+
+void TCP_puits() {
+    todo
+}
+
+
+void set_config_defaults(struct ConnexionConfig * conf, int argc, char **argv) {
+    conf->port = atoi(argv[argc-1]); // todo tester cas erreur utilisateur
+    // conf->port = htons(conf->port); // pas necessaire
+
+    conf->nb_mess = -1;
+    conf->mode = NONE;
+    conf->type = TCP;
+    conf->url = NULL;
+    conf->url_size = -1;
+}
+
+
 int main(int argc, char **argv) {
     int c;
     extern char *optarg;
     extern int optind;
 
     struct ConnexionConfig conf;
-    conf.port = atoi(argv[argc-1]); // todo tester cas erreur utilisateur
-    conf.port = htons(conf.port);
-
-    conf.nb_mess = -1;
-    conf.mode = NONE;
-    conf.type = NONE;
-    conf.url = NULL;
-    conf.url_size = -1;
-
-//	int nb_message = -1; /* Nb de messages à envoyer ou à recevoir, par défaut : 10 en émission, infini en réception */
-//	int source = -1 ; /* 0=puits, 1=source */
-//    enum ConnexionType connexion = NONE;
+    set_config_defaults(&conf, argc, argv);
+    
 
 	while ((c = getopt(argc, argv, "pn:us")) != -1) {
 		switch (c) {
@@ -123,12 +139,15 @@ int main(int argc, char **argv) {
 			conf.mode = Puits;
 			break;
 
-		case 's':
+		case 's': // source
 			if ( conf.mode == Puits ) {
 				printf("usage: cmd [-p|-s][-n ##]\n");
 				exit(1) ;
 			}
             conf.mode = Source;
+            conf.url = argv[argc - 2];
+            conf.url_size = strlen(conf.url);
+            // printf("set url to %s, wiht len %d", conf.url, conf.url_size);
 			break;
 
 		case 'n':
@@ -153,23 +172,27 @@ int main(int argc, char **argv) {
 	if ( conf.mode == Source ) {
         printf("on est dans le source\n");
         if ( conf.type == UDP ) {
-            UDP_source();
+            UDP_source(conf);
+        } else {
+            TCP_source();
         }
     } else { // recieve
         printf("on est dans le puits\n");
         if ( conf.type == UDP ) {
-            UDP_Puits();
+            UDP_puits();
+        } else {
+            TCP_puits();
         }
     }
 
 	if (conf.nb_mess != -1) {
-		if (conf.mode == Source ) {
+		if ( conf.mode == Source ) {
             printf("nb de tampons à envoyer : %d\n", conf.nb_mess);
         } else {
             printf("nb de tampons à recevoir : %d\n", conf.nb_mess);
         }
 	} else {
-		if (conf.mode == Source ) {
+		if ( conf.mode == Source ) {
 			conf.nb_mess = 10 ;
 			printf("nb de tampons à envoyer = 10 par défaut\n");
 		} else {
