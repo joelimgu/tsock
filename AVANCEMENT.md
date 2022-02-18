@@ -3,7 +3,6 @@ Veuillez renseigner votre avancement à chaque étape achevée et testée et par
 NOMs & prénoms du groupe étudiants : 
 - Aude JEAN-BAPTISTE 
 - Joel IMBERGAMO GUASCH 
-- 3MIC D
 
 # Avancement sur la Partie TP AIPS - Mise en oeuvre de l'application tsock
 
