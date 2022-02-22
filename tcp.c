@@ -33,7 +33,7 @@ void send_TCP_message(int sk, struct ConnexionConfig * conf) {
         printf("SOURCE: Envoi nº %d (%d) [%s]\n", n+1, conf->longueur_mess, buff);
 
         if ( env_res == -1 ) {
-            printf("erreur à l'envoi du message");
+            printf("Erreur à l'envoi du message");
             exit(-3);
         }
     }

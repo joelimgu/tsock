@@ -98,23 +98,23 @@ int main(int argc, char **argv) {
 	}
 	
 	if ( conf.mode == Source ) {
-        if ( conf.type == UDP ) {
+        if ( conf.type == UDP ) { // Source UDP 
 			printf("SOURCE: long_ms_emis=%d, port=%d, nb_envois=%d, TP=%s, dest=%s\n",conf.longueur_mess,conf.port,conf.nb_mess,"UDP",conf.url);
         	UDP_source(&conf);
-        }else{
+        }else{ // Source TCP 
         	printf("SOURCE: long_ms_emis=%d, port=%d, nb_envois=%d, TP=%s, dest=%s\n",conf.longueur_mess,conf.port,conf.nb_mess,"TCP",conf.url);
         	TCP_source(&conf);
         }
         printf("SOURCE: fin\n");
     } else { 
-        if ( conf.type == UDP ) {
+        if ( conf.type == UDP ) { // Puits UDP 
         	if ( conf.nb_mess == -1 ){
         		printf("PUITS: long_ms_lu=%d, port=%d, nb_receptions=infini, TP=%s\n",conf.longueur_mess,conf.port,"UDP");
         	}else{
         		printf("PUITS: long_ms_lu=%d, port=%d, nb_receptions=%d, TP=%s\n",conf.longueur_mess,conf.port,conf.nb_mess,"UDP");
         	}
             UDP_puits(&conf);
-        } else {
+        } else { // Puits TCP 
         	if ( conf.nb_mess == -1 ){
         		printf("PUITS: long_ms_lu=%d, port=%d, nb_receptions=infini, TP=%s\n",conf.longueur_mess,conf.port,"TCP");
         	}else{

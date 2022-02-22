@@ -31,7 +31,7 @@ void afficher_message(char *message, int lg, int nb_mess, struct ConnexionConfig
 }
 
 
-// transformer num en un tableau contenant les codes ascii de ses chiffres 
+// transformer un entier en un tableau contenant les codes ascii de ses chiffres 
 int * int_to_code_ascii(int num){
 	int * tab_num = malloc(5*sizeof(int)); // tableau de taille maximum 5  
 	int code_0 = (int)'0' ; 
@@ -39,7 +39,7 @@ int * int_to_code_ascii(int num){
 	int reste = 0 ; 
 	for (int i = 0 ; i < 5 ; i ++) {
 		reste = n%10 ; 
-		if ( i != 0 && reste == 0 ) {
+		if ( n== 0 && reste == 0 ) {
 			tab_num[4-i]=(int)'-'; // les premiers caractères sont des tirets 
 		}else{
 			tab_num[4-i]=code_0+reste;
