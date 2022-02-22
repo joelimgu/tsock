@@ -23,8 +23,7 @@ données du réseau */
 
 
 void set_config_defaults(struct ConnexionConfig * conf, int argc, char **argv) {
-    conf->port = atoi(argv[argc-1]); // todo tester cas erreur utilisateur
-
+    conf->port=atoi(argv[argc-1]);
     conf->nb_mess = -1;
     conf->mode = NONE;
     conf->type = TCP;
@@ -41,23 +40,17 @@ int main(int argc, char **argv) {
 
     struct ConnexionConfig conf;
 
-    conf.port = atoi(argv[argc-1]); // todo tester cas erreur utilisateur
+    conf.port = atoi(argv[argc-1]); 
     conf.port = htons(conf.port);
-
-    /*conf.nb_mess = -1;
-    conf.mode = NONE;
-    conf.type = NONE;
-    conf.url = NULL;
-    conf.url_size = -1;*/ 
-
 
 
     set_config_defaults(&conf, argc, argv);
     
+    
 	while ((c = getopt(argc, argv, "pn:usl:")) != -1) {
 
 		switch (c) {
-		case 'p':
+		case 'p': // puits 
 			if ( conf.mode == Source ) {
 				printf("usage: cmd [-p|-s][-n ##][-l ##]\n");
 				exit(1);
@@ -75,56 +68,58 @@ int main(int argc, char **argv) {
             conf.url_size = strlen(conf.url);
 			break;
 
-		case 'n':
+		case 'n': // nombre de messages 
             conf.nb_mess = atoi(optarg);
 			break;
 
-        case 'u':
+        case 'u': // utilisation d'UDP 
             conf.type = UDP;
             break;
 
-        case 'l':
+        case 'l': // longueur des messages 
             conf.longueur_mess = atoi(optarg);
-            printf("long mess: %d\n", conf.longueur_mess);
+   			break;
 
-		default:
+		default: // pas d'options 
 			printf("usage: cmd [-p|-s][-n ##][-l ##]\n");
 			break;
 		}
 	}
 
+	// utilisation d'options sans préciser si mode source ou puits 
 	if ( conf.mode == NONE ) {
 		printf("usage: cmd [-p|-s][-n ##][-l ##]\n");
 		exit(1) ;
 	}
 	
-	printf("debug : nb de messages : %d\n",conf.nb_mess) ; 
-	if (conf.nb_mess != -1) {
-		if ( conf.mode == Source ) {
-            printf("nb de tampons à envoyer : %d\n", conf.nb_mess);
-        } else {
-            printf("nb de tampons à recevoir : %d\n", conf.nb_mess);
-        }
-	} else {
-		if ( conf.mode == Source ) {
-			conf.nb_mess = 10 ;
-			printf("nb de tampons à envoyer = 10 par défaut\n");
-		} else {
-			conf.nb_mess = -1 ; 
-            printf("nb de tampons à recevoir = infini\n");
-        }
+	// nombre de messages en mode source à 10 par défaut 
+	if (conf.nb_mess == -1 && conf.mode == Source) {
+		conf.nb_mess = 10 ; 
 	}
-
+	
 	if ( conf.mode == Source ) {
         if ( conf.type == UDP ) {
-            UDP_source(&conf);
-        } else {
-            TCP_source(&conf);
+			printf("SOURCE: long_ms_emis=%d, port=%d, nb_envois=%d, TP=%s, dest=%s\n",conf.longueur_mess,conf.port,conf.nb_mess,"UDP",conf.url);
+        	UDP_source(&conf);
+        }else{
+        	printf("SOURCE: long_ms_emis=%d, port=%d, nb_envois=%d, TP=%s, dest=%s\n",conf.longueur_mess,conf.port,conf.nb_mess,"TCP",conf.url);
+        	TCP_source(&conf);
         }
+        printf("SOURCE: fin\n");
     } else { 
         if ( conf.type == UDP ) {
+        	if ( conf.nb_mess == -1 ){
+        		printf("PUITS: long_ms_lu=%d, port=%d, nb_receptions=infini, TP=%s\n",conf.longueur_mess,conf.port,"UDP");
+        	}else{
+        		printf("PUITS: long_ms_lu=%d, port=%d, nb_receptions=%d, TP=%s\n",conf.longueur_mess,conf.port,conf.nb_mess,"UDP");
+        	}
             UDP_puits(&conf);
         } else {
+        	if ( conf.nb_mess == -1 ){
+        		printf("PUITS: long_ms_lu=%d, port=%d, nb_receptions=infini, TP=%s\n",conf.longueur_mess,conf.port,"TCP");
+        	}else{
+        		printf("PUITS: long_ms_lu=%d, port=%d, nb_receptions=%d, TP=%s\n",conf.longueur_mess,conf.port,conf.nb_mess,"TCP");
+        	}
             TCP_puits(&conf);
         }
     }

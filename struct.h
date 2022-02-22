@@ -37,3 +37,5 @@ void afficher_message(char *message, int lg, int nb_mess, struct ConnexionConfig
 int * int_to_code_ascii(int num); 
 
 void create_message_line(int num,char * mess, int mess_len, char c);
+
+

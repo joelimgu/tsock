@@ -28,7 +28,7 @@ void send_TCP_message(int sk, struct ConnexionConfig * conf) {
     int env_res;
 
     for ( int n = 0; n < conf->nb_mess; n++ ) {
-        create_message_line(n+1, buff, conf->longueur_mess,(char)(c + n));
+        create_message_line(n+1, buff, conf->longueur_mess,(char)(c + n%26));
         env_res = write(sk,buff,conf->longueur_mess*sizeof(char));
         printf("SOURCE: Envoi nº %d (%d) [%s]\n", n+1, conf->longueur_mess, buff);
 
@@ -41,6 +41,7 @@ void send_TCP_message(int sk, struct ConnexionConfig * conf) {
     free(buff);
 }
 
+// connect : "client"
 void TCP_source(struct ConnexionConfig * conf){
     int sk = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if ( sk == -1 ) {

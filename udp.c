@@ -27,7 +27,7 @@ void send_UDP_message(int sk, struct sockaddr* adr, struct ConnexionConfig * con
     int c = (int)'a';
     
     for ( int n = 0; n < conf->nb_mess; n++ ) {
-        create_message_line(n, buff, conf->longueur_mess,(char)(c + n));
+        create_message_line(n+1, buff, conf->longueur_mess,(char)(c + n%26));
         sendto(sk,buff,conf->longueur_mess*sizeof(char), 0, (struct sockaddr* )adr, sizeof(struct sockaddr_in));
         printf("SOURCE: Envoi nº %d (%d) [%s]\n", n+1, conf->longueur_mess, buff);
     }
@@ -47,7 +47,7 @@ void UDP_source(struct ConnexionConfig * conf) {
 	adr.sin_family = AF_INET;
 	adr.sin_port = htons(conf->port); 
 
-	printf("debug udp source : nb de messages : %d\n",conf->nb_mess) ; 
+	
 	struct hostent *hp = gethostbyname(conf->url);
 	if ( hp == NULL ) {
 		printf("Erreur getbyhostname\n");
@@ -62,8 +62,7 @@ void UDP_source(struct ConnexionConfig * conf) {
 }
 
 void UDP_puits(struct ConnexionConfig * conf) {
-    char buff[1024];
-    memset(buff, 0, 1024);
+    char * buff = malloc(sizeof(char)*conf->longueur_mess);
 
     int sk = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if ( sk == -1 ) {
@@ -82,11 +81,10 @@ void UDP_puits(struct ConnexionConfig * conf) {
     int p_long_adr_emeteur = sizeof(adr);
 
 	
-	printf("debug udp puits : nb de messages : %d\n",conf->nb_mess) ; 
 	if ( conf->nb_mess==-1 ) {
 		int mess_counter = 0;
 		while ( true ) {
-		    recvfrom(sk, buff, 1024, 0, adr_emeteur,(socklen_t *)&p_long_adr_emeteur);
+		    recvfrom(sk, buff, conf->longueur_mess, 0, adr_emeteur,(socklen_t *)&p_long_adr_emeteur);
 		    mess_counter++;
 		    printf("PUITS: Reception nº %d (%d) [%s]\n",mess_counter, conf->longueur_mess, buff);
 		}
@@ -94,10 +92,11 @@ void UDP_puits(struct ConnexionConfig * conf) {
 	}else{
 		int max = conf->nb_mess ; /* nb de messages attendus */
     	for (int i=1 ; i <= max ; i ++) {
-        	recvfrom(sk, buff, 1024, 0, adr_emeteur,(socklen_t *)&p_long_adr_emeteur);
+        	recvfrom(sk, buff, conf->longueur_mess, 0, adr_emeteur,(socklen_t *)&p_long_adr_emeteur);
         	printf("PUITS: Reception nº %d (%d) [%s]\n",i, conf->longueur_mess, buff);
     	}
     	close(sk); 
 	}
+	free(buff);
 }
 

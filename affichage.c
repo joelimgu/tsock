@@ -54,7 +54,10 @@ void create_message_line(int num, char * mess, int mess_len, char c) {
     for (int i = 0 ; i < 5 ; i ++) {
     	mess[i]=(char)tab_num[i]; 
     }
-    for ( int i = 5; i < mess_len-5; i++ ) {
+    for ( int i = 5; i < mess_len; i++ ) {
         mess[i] = c;
     }
+    free(tab_num) ; 
 }
+
+
