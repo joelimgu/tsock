@@ -6,7 +6,7 @@ NOMs & prénoms du groupe étudiants :
 
 ## Génération de l'exécutable 
 
-Ce projet inclut un makefile : pour générer l'exécutable, entrer la commande make dans un terminal puis simplememnt exécuter ./tsock 
+Ce projet inclut un makefile : pour générer l'exécutable, entrer la commande make dans un terminal puis simplememnt exécuter ./tsock . 
 Vous pouvez également supprimer les fichiers objets via la comande make clean.
 
 ## Avancement 
