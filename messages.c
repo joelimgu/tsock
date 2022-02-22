@@ -30,8 +30,31 @@ void afficher_message(char *message, int lg, int nb_mess, struct ConnexionConfig
     printf("]\n");
 }
 
-void create_message_line(char * mess, int mess_len, char c) {
-    for ( int i = 0; i < mess_len; i++ ) {
+
+// transformer num en un tableau contenant les codes ascii de ses chiffres 
+int * int_to_code_ascii(int num){
+	int * tab_num = malloc(5*sizeof(int)); // tableau de taille maximum 5  
+	int code_0 = (int)'0' ; 
+	int n = num ; 
+	int reste = 0 ; 
+	for (int i = 0 ; i < 5 ; i ++) {
+		reste = n%10 ; 
+		if ( i != 0 && reste == 0 ) {
+			tab_num[4-i]=(int)'-'; // les premiers caractères sont des tirets 
+		}else{
+			tab_num[4-i]=code_0+reste;
+		}
+		n = n/10; 
+	}
+	return tab_num ; 
+}
+
+void create_message_line(int num, char * mess, int mess_len, char c) {
+	int * tab_num = int_to_code_ascii(num) ; 
+    for (int i = 0 ; i < 5 ; i ++) {
+    	mess[i]=(char)tab_num[i]; 
+    }
+    for ( int i = 5; i < mess_len-5; i++ ) {
         mess[i] = c;
     }
 }

@@ -25,7 +25,7 @@ données du réseau */
 void set_config_defaults(struct ConnexionConfig * conf, int argc, char **argv) {
     conf->port = atoi(argv[argc-1]); // todo tester cas erreur utilisateur
 
-    conf->nb_mess = 10;
+    conf->nb_mess = -1;
     conf->mode = NONE;
     conf->type = TCP;
     conf->url = NULL;
@@ -44,11 +44,11 @@ int main(int argc, char **argv) {
     conf.port = atoi(argv[argc-1]); // todo tester cas erreur utilisateur
     conf.port = htons(conf.port);
 
-    conf.nb_mess = -1;
+    /*conf.nb_mess = -1;
     conf.mode = NONE;
     conf.type = NONE;
     conf.url = NULL;
-    conf.url_size = -1;
+    conf.url_size = -1;*/ 
 
 
 
@@ -97,6 +97,23 @@ int main(int argc, char **argv) {
 		printf("usage: cmd [-p|-s][-n ##][-l ##]\n");
 		exit(1) ;
 	}
+	
+	printf("debug : nb de messages : %d\n",conf.nb_mess) ; 
+	if (conf.nb_mess != -1) {
+		if ( conf.mode == Source ) {
+            printf("nb de tampons à envoyer : %d\n", conf.nb_mess);
+        } else {
+            printf("nb de tampons à recevoir : %d\n", conf.nb_mess);
+        }
+	} else {
+		if ( conf.mode == Source ) {
+			conf.nb_mess = 10 ;
+			printf("nb de tampons à envoyer = 10 par défaut\n");
+		} else {
+			conf.nb_mess = -1 ; 
+            printf("nb de tampons à recevoir = infini\n");
+        }
+	}
 
 	if ( conf.mode == Source ) {
         if ( conf.type == UDP ) {
@@ -112,19 +129,6 @@ int main(int argc, char **argv) {
         }
     }
 
-	if (conf.nb_mess != -1) {
-		if ( conf.mode == Source ) {
-            printf("nb de tampons à envoyer : %d\n", conf.nb_mess);
-        } else {
-            printf("nb de tampons à recevoir : %d\n", conf.nb_mess);
-        }
-	} else {
-		if ( conf.mode == Source ) {
-			conf.nb_mess = 10 ;
-			printf("nb de tampons à envoyer = 10 par défaut\n");
-		} else {
-            printf("nb de tampons à recevoir = infini\n");
-        }
-	}
+	
 }
 

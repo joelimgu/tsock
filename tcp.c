@@ -28,7 +28,7 @@ void send_TCP_message(int sk, struct ConnexionConfig * conf) {
     int env_res;
 
     for ( int n = 0; n < conf->nb_mess; n++ ) {
-        create_message_line(buff, conf->longueur_mess,(char)(c + n));
+        create_message_line(n+1, buff, conf->longueur_mess,(char)(c + n));
         env_res = write(sk,buff,conf->longueur_mess*sizeof(char));
         printf("SOURCE: Envoi nº %d (%d) [%s]\n", n+1, conf->longueur_mess, buff);
 
@@ -69,7 +69,7 @@ void TCP_source(struct ConnexionConfig * conf){
     }
 
     send_TCP_message(sk, conf);
-
+	close(sk);
 }
 
 
@@ -104,16 +104,33 @@ void TCP_puits(struct ConnexionConfig * conf){
     }
 
     
-    int max = 10 ; /* nb de messages attendus */
-    int lg_max = 30 ; /* taille max de chaque message */
+    
+    int lg_max = conf->longueur_mess ; /* taille max de chaque message */
     char buff[lg_max];
     memset(buff, 0, lg_max);
 
-    for (int i=0 ; i < max ; i ++) {
-        int lg_rec = read(sock_connexion, buff, lg_max);
-        if (lg_rec == -1){
-            printf("Echec du read\n") ; exit(1) ;
+    if ( conf->nb_mess == -1) {
+		int mess_counter = 0;
+		while ( true ) {
+		    int lg_rec = read(sock_connexion, buff, lg_max);
+		    if (lg_rec == -1){
+		        printf("Echec du read\n") ; exit(1) ;
+		    }
+		    if (lg_rec != 0) {
+				mess_counter ++ ; 
+				afficher_message(buff,lg_rec, mess_counter, conf);
+			}
+		}
+		close(sk); // code inaccessible
+    }else{
+    	int max = conf->nb_mess ; /* nb de messages attendus */
+    	for (int i=1 ; i <= max ; i ++) {
+		    int lg_rec = read(sock_connexion, buff, lg_max);
+		    if (lg_rec == -1){
+		        printf("Echec du read\n") ; exit(1) ;
+		    }
+		    afficher_message(buff,lg_rec, i, conf);
         }
-        afficher_message(buff,lg_rec, i, conf);
+        close(sk); 
     }
 }

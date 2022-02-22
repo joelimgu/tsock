@@ -34,4 +34,6 @@ void UDP_puits(struct ConnexionConfig * conf);
 
 void afficher_message(char *message, int lg, int nb_mess, struct ConnexionConfig * conf);
 
-void create_message_line(char * mess, int mess_len, char c);
+int * int_to_code_ascii(int num); 
+
+void create_message_line(int num,char * mess, int mess_len, char c);
